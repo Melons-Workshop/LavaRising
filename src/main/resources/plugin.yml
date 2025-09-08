@@ -1,0 +1,4 @@
+name: LavaRising
+version: '1.0-SNAPSHOT'
+main: dev.spozap.lavaRising.LavaRising
+api-version: '1.21'
