@@ -27,7 +27,7 @@ class LavaCommand {
         GameCreationManager.checkArenaCreation(p)
     }
 
-    @CommandPermission("start")
+    @CommandPermission("lavarising.start")
     @Subcommand("start")
     fun startGame(p: Player) {
         val arena = ArenaManager.arena
@@ -37,8 +37,18 @@ class LavaCommand {
         }
 
         CurrentGameManager.create(arena)
+    }
 
+    @CommandPermission("lavarising.stop")
+    @Subcommand("stop")
+    fun stopGame(p: Player) {
+        val arena = ArenaManager.arena
+        if (arena == null) {
+            p.sendMessage(mm("<bold><red>No arena was created!</red></bold>"))
+            return
+        }
 
+        CurrentGameManager.stop(p)
     }
 
 }

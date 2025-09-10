@@ -7,6 +7,7 @@ object ListenersRegistry {
 
     fun registerListeners() {
         Bukkit.getPluginManager().registerEvents(WandEvents(), LavaRising.INSTANCE)
+        Bukkit.getPluginManager().registerEvents(LavaFlowEvent(), LavaRising.INSTANCE)
     }
 
 }
