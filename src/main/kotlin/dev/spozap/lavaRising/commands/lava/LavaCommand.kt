@@ -1,18 +1,21 @@
 package dev.spozap.lavaRising.commands.lava
 
+import dev.spozap.lavaRising.managers.ArenaManager
+import dev.spozap.lavaRising.managers.CurrentGameManager
 import dev.spozap.lavaRising.managers.GameCreationManager
 import dev.spozap.lavaRising.utils.ItemUtils
+import dev.spozap.lavaRising.utils.mm
 import org.bukkit.entity.Player
 import revxrsal.commands.annotation.Command
 import revxrsal.commands.annotation.Subcommand
 import revxrsal.commands.bukkit.annotation.CommandPermission
 
 
-@Command("lava")
+@Command("lavarising")
 class LavaCommand {
 
-    @CommandPermission("lavarising.wand")
-    @Subcommand("wand")
+    @CommandPermission("lavarising.select")
+    @Subcommand("select")
     fun wand(p: Player) {
         val wand = ItemUtils.createWand()
         p.give(wand)
@@ -22,6 +25,20 @@ class LavaCommand {
     @Subcommand("arena create")
     fun createArena(p: Player) {
         GameCreationManager.checkArenaCreation(p)
+    }
+
+    @CommandPermission("start")
+    @Subcommand("start")
+    fun startGame(p: Player) {
+        val arena = ArenaManager.arena
+        if (arena == null) {
+            p.sendMessage(mm("<bold><red>No arena was created!</red></bold>"))
+            return
+        }
+
+        CurrentGameManager.create(arena)
+
+
     }
 
 }

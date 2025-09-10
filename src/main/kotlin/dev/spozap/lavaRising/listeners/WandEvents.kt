@@ -23,7 +23,7 @@ class WandEvents : Listener {
             return
         }
 
-        if (!player.hasPermission("lavarising.wand")) {
+        if (!player.hasPermission("lavarising.select")) {
             player.sendMessage(mm("<red>You cannot use LavaRising wand!</red>"))
             return
         }
