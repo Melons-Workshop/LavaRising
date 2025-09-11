@@ -51,4 +51,25 @@ class LavaCommand {
         CurrentGameManager.stop(p)
     }
 
+    @CommandPermission("lavarising.resume")
+    @Subcommand("resume")
+    fun resumeGame(p: Player) {
+        val arena = ArenaManager.arena
+        if (arena == null) {
+            p.sendMessage(mm("<bold><red>No arena was created!</red></bold>"))
+            return
+        }
+
+        CurrentGameManager.start()
+    }
+
+    @CommandPermission("lavarising.reset")
+    @Subcommand("reset")
+    fun resetGame(p: Player) {
+        val arena = ArenaManager.arena
+        arena?.let {
+            CurrentGameManager.reset()
+        } ?: p.sendMessage(mm("<bold><red>No arena was created!</red></bold>"))
+    }
+
 }

@@ -1,9 +1,7 @@
 package dev.spozap.lavaRising.managers
 
 import dev.spozap.lavaRising.LavaRising
-import dev.spozap.lavaRising.models.Arena
-import dev.spozap.lavaRising.models.Game
-import dev.spozap.lavaRising.models.GameState
+import dev.spozap.lavaRising.models.*
 import dev.spozap.lavaRising.utils.mm
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
@@ -19,48 +17,63 @@ object CurrentGameManager {
     var lavaRisingTask: BukkitTask? = null
 
     fun create(arena: Arena) {
-        val players = Bukkit.getOnlinePlayers().toList()
+        val players = Bukkit.getOnlinePlayers().toSet()
 
         currentGame = Game(arena = arena, participants = players)
         startCountdown()
     }
 
     fun start() {
-        currentGame?.state = GameState.RUNNING
+        currentGame?.let {
+            it.state = GameState.RUNNING
 
-        lavaRisingTask = object : BukkitRunnable() {
+            lavaRisingTask = object : BukkitRunnable() {
 
-            override fun run() {
-                val world = currentGame?.arena?.pos1?.world!!
-                val arena = currentGame?.arena!!
+                override fun run() {
+                    val arena = it.arena
+                    val lavaY = currentGame?.lavaY!!
 
-                val lavaY = currentGame?.lavaY!!
+                    if (currentGame!!.lavaReachedTop) {
+                        cancel()
+                        it.audience.showTitle(
+                            Title.title(
+                                mm("<bold><red>LavaRising</red></bold>"),
+                                mm("<bold><red>Game has finished</red></bold>")
+                            )
+                        )
 
-                val minX = minOf(arena.pos1.blockX, arena.pos2.blockX)
-                val maxX = maxOf(arena.pos1.blockX, arena.pos2.blockX)
-                val minZ = minOf(arena.pos1.blockZ, arena.pos2.blockZ)
-                val maxZ = maxOf(arena.pos1.blockZ, arena.pos2.blockZ)
-
-                if (lavaY > maxOf(arena.pos1.blockY, arena.pos2.blockY)) {
-                    cancel()
-                    return
-                }
-
-                for (x in minX..maxX) {
-                    for (z in minZ..maxZ) {
-                        world.getBlockAt(x, lavaY.toInt(), z).type = Material.LAVA
+                        reset()
+                        return
                     }
-                }
 
-                currentGame?.lavaY++
-            }
-        }.runTaskTimer(LavaRising.INSTANCE, 0L, 100L)
+                    arena.fill(lavaY, Material.LAVA)
+
+                    currentGame?.lavaY++
+                }
+            }.runTaskTimer(LavaRising.INSTANCE, 0L, 40L)
+        }
+
     }
 
     fun stop(p: Player) {
         currentGame?.state = GameState.STOPPED
         lavaRisingTask?.cancel()
         p.sendMessage(mm("<green>Game stopped successfully</green>"))
+    }
+
+    fun reset() {
+        currentGame?.arena?.clearLava()
+        lavaRisingTask = null
+        currentGame = null
+    }
+
+    fun registerDeath(player: Player) {
+        if (currentGame!!.deaths.contains(player.uniqueId)) {
+            return
+        }
+
+        currentGame?.audience?.sendMessage(mm("<bold><gray>LavaRising >> </gray><red>${player.name} is now eliminated</red></bold>"))
+        currentGame?.deaths?.add(player.uniqueId)
     }
 
 
