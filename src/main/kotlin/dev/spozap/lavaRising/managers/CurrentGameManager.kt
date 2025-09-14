@@ -2,10 +2,10 @@ package dev.spozap.lavaRising.managers
 
 import dev.spozap.lavaRising.LavaRising
 import dev.spozap.lavaRising.models.*
-import dev.spozap.lavaRising.utils.mm
+import dev.spozap.lavaRising.utils.configMessage
+import dev.spozap.lavaRising.utils.sendConfigTitle
 import net.kyori.adventure.key.Key
 import net.kyori.adventure.sound.Sound
-import net.kyori.adventure.title.Title
 import org.bukkit.Bukkit
 import org.bukkit.Material
 import org.bukkit.entity.Player
@@ -35,12 +35,8 @@ object CurrentGameManager {
 
                     if (currentGame!!.lavaReachedTop) {
                         cancel()
-                        it.audience.showTitle(
-                            Title.title(
-                                mm("<bold><red>LavaRising</red></bold>"),
-                                mm("<bold><red>Game has finished</red></bold>")
-                            )
-                        )
+
+                        sendConfigTitle(it.audience, "ended")
 
                         reset()
                         return
@@ -58,7 +54,7 @@ object CurrentGameManager {
     fun stop(p: Player) {
         currentGame?.state = GameState.STOPPED
         lavaRisingTask?.cancel()
-        p.sendMessage(mm("<green>Game stopped successfully</green>"))
+        configMessage(p, "game-stopped")
     }
 
     fun reset() {
@@ -72,8 +68,8 @@ object CurrentGameManager {
             return
         }
 
-        currentGame?.audience?.sendMessage(mm("<bold><gray>LavaRising >> </gray><red>${player.name} is now eliminated</red></bold>"))
         currentGame?.deaths?.add(player.uniqueId)
+        configMessage(player, "player-death", mapOf(Pair("player", player.name)))
     }
 
 
@@ -84,17 +80,14 @@ object CurrentGameManager {
 
             override fun run() {
                 if (time <= 0) {
-                    currentGame?.audience?.showTitle(
-                        Title.title(
-                            mm("<red>LavaRising</red>"),
-                            mm("<red>Lava will start raising! Be careful</red>")
+                    currentGame?.audience?.let {
+                        it.stopSound(tickSound)
+                        it.playSound(
+                            Sound.sound(Key.key("minecraft:entity.ender_dragon.growl"), Sound.Source.MASTER, 1f, 1f)
                         )
-                    )
-                    currentGame?.audience?.stopSound(tickSound)
 
-                    currentGame?.audience?.playSound(
-                        Sound.sound(Key.key("minecraft:entity.ender_dragon.growl"), Sound.Source.MASTER, 1f, 1f)
-                    )
+                        sendConfigTitle(it, "started")
+                    }
 
                     cancel()
                     start()
@@ -102,14 +95,10 @@ object CurrentGameManager {
                     return
                 }
 
-                currentGame?.audience?.showTitle(
-                    Title.title(
-                        mm("<red>LavaRising</red>"),
-                        mm("<red>Game will start in $time seconds</red>")
-                    )
-                )
-
-                currentGame?.audience?.playSound(tickSound)
+                currentGame?.audience?.let {
+                    sendConfigTitle(it, "starting", mapOf(Pair("seconds", time.toString())))
+                    it.playSound(tickSound)
+                }
 
                 time--
             }

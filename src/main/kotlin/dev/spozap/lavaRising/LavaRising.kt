@@ -13,6 +13,8 @@ class LavaRising : JavaPlugin() {
     override fun onEnable() {
         INSTANCE = this
 
+        saveDefaultConfig()
+
         ListenersRegistry.registerListeners()
         CommandRegistry.registerCommands()
 
