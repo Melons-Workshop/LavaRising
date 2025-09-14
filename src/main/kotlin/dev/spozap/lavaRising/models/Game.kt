@@ -1,6 +1,7 @@
 package dev.spozap.lavaRising.models
 
 import net.kyori.adventure.audience.Audience
+import org.bukkit.Location
 import org.bukkit.entity.Player
 import java.util.*
 
@@ -8,7 +9,7 @@ data class Game(
     var state: GameState = GameState.WAITING,
     val arena: Arena,
     val participants: Set<Player> = emptySet(),
-    val deaths: MutableSet<UUID> = mutableSetOf()
+    val deaths: MutableMap<UUID, Location> = mutableMapOf()
 ) {
     val audience: Audience = Audience.audience(participants)
 
@@ -17,3 +18,4 @@ data class Game(
     val lavaReachedTop: Boolean
         get() = lavaY > maxOf(arena.pos1.blockY, arena.pos2.blockY)
 }
+

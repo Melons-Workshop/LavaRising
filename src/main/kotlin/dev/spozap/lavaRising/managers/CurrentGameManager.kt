@@ -11,6 +11,7 @@ import org.bukkit.Material
 import org.bukkit.entity.Player
 import org.bukkit.scheduler.BukkitRunnable
 import org.bukkit.scheduler.BukkitTask
+import java.util.*
 
 object CurrentGameManager {
     var currentGame: Game? = null
@@ -28,25 +29,41 @@ object CurrentGameManager {
             it.state = GameState.RUNNING
 
             lavaRisingTask = object : BukkitRunnable() {
-
                 override fun run() {
-                    val arena = it.arena
-                    val lavaY = currentGame?.lavaY!!
+                    val game = currentGame ?: return
+                    val arena = game.arena
 
-                    if (currentGame!!.lavaReachedTop) {
+                    val topY = maxOf(arena.pos1.blockY, arena.pos2.blockY)
+
+                    if (game.lavaReachedTop) {
                         cancel()
-
-                        sendConfigTitle(it.audience, "ended")
-
+                        sendConfigTitle(game.audience, "ended")
                         reset()
                         return
                     }
 
-                    arena.fill(lavaY, Material.LAVA)
+                    arena.fill(game.lavaY, Material.LAVA)
+                    game.lavaY++
 
-                    currentGame?.lavaY++
+                    val toRemove = mutableListOf<UUID>()
+                    for ((uuid, loc) in game.deaths) {
+                        if (loc.blockY > topY) {
+                            toRemove.add(uuid)
+                            continue
+                        }
+
+                        val block = loc.world.getBlockAt(loc.blockX, loc.blockY, loc.blockZ)
+                        if (block.type == Material.AIR) {
+                            block.type = Material.LAVA
+                        }
+
+                        loc.y = loc.y + 1 // subimos un bloque en Y para la próxima vez
+                    }
+
+                    toRemove.forEach { game.deaths.remove(it) }
                 }
             }.runTaskTimer(LavaRising.INSTANCE, 0L, 40L)
+
         }
 
     }
@@ -64,12 +81,12 @@ object CurrentGameManager {
     }
 
     fun registerDeath(player: Player) {
-        if (currentGame!!.deaths.contains(player.uniqueId)) {
-            return
-        }
+        val game = currentGame ?: return
+        if (game.deaths.containsKey(player.uniqueId)) return
 
-        currentGame?.deaths?.add(player.uniqueId)
-        configMessage(player, "player-death", mapOf(Pair("player", player.name)))
+        game.deaths[player.uniqueId] = player.location.clone()
+
+        configMessage(player, "player-death", mapOf("player" to player.name))
     }
 
 
